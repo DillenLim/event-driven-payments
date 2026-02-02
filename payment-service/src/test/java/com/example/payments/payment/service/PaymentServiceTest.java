@@ -24,6 +24,9 @@ class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private com.example.payments.payment.event.PaymentEventProducer paymentEventProducer;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -47,5 +50,6 @@ class PaymentServiceTest {
         assertEquals(PaymentState.CREATED, payment.getState());
         assertEquals(new BigDecimal("100.00"), payment.getAmount());
         verify(paymentRepository).save(any(Payment.class));
+        verify(paymentEventProducer).emitEvent(any(), any(), any());
     }
 }

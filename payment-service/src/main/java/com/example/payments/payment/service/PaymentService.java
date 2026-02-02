@@ -19,6 +19,7 @@ import java.util.UUID;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final com.example.payments.payment.event.PaymentEventProducer paymentEventProducer;
 
     @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
@@ -29,7 +30,18 @@ public class PaymentService {
                 request.getDebitorId(),
                 request.getBeneficiaryId()
         );
-        return paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        com.example.payments.payment.event.PaymentCreatedEvent event = new com.example.payments.payment.event.PaymentCreatedEvent(
+                savedPayment.getId().toString(),
+                savedPayment.getAmount(),
+                savedPayment.getCurrency(),
+                savedPayment.getDebitorId(),
+                savedPayment.getBeneficiaryId()
+        );
+        paymentEventProducer.emitEvent("payments.lifecycle", savedPayment.getId().toString(), event);
+
+        return savedPayment;
     }
 
     public Payment getPayment(UUID paymentId) {
