@@ -56,6 +56,19 @@ graph TD
     -   **Wallet Service**: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
     -   **Ledger Service**: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
 
+## Demo
+
+We have included a script to demonstrate the full payment lifecycle in the terminal.
+
+```bash
+./demo_script.sh
+```
+
+This script will:
+1.  Check if services are healthy.
+2.  Create a payment.
+3.  Poll until the Saga completes (payment reaches `COMPLETED` state).
+
 ## API Usage
 
 ### Create a Payment
