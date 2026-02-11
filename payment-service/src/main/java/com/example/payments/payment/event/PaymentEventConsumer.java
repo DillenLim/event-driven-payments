@@ -1,5 +1,6 @@
 package com.example.payments.payment.event;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -13,11 +14,34 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class PaymentEventConsumer {
 
+    private final com.example.payments.payment.service.PaymentService paymentService;
+    private final ObjectMapper objectMapper;
+
     @KafkaListener(topics = "payments.lifecycle", groupId = "payment-service-group")
-    public void onEvent(String event) {
-        log.info("Received event: {}", event);
-        // Logic to process event (e.g., update state based on other service events if needed)
-        // For now, this service mostly produces, but might listen to Wallet/Ledger feedbacks if architecture dictates.
-        // The spec mentions "Consumer Requirements: Idempotent, validate state"
+    public void onEvent(String message) {
+        try {
+            if (message.contains("FundsReservedEvent")) {
+                FundsReservedEvent event = objectMapper.readValue(message, FundsReservedEvent.class);
+                log.info("Processing FundsReservedEvent: {}", event);
+
+                if ("SUCCESS".equals(event.getStatus())) {
+                    paymentService.authorizePayment(event.getAggregateId());
+                } else {
+                    log.warn("Funds reservation failed for payment: {}", event.getAggregateId());
+                    // Handle failure (e.g. cancel payment)
+                }
+            } else if (message.contains("TransactionRecordedEvent")) {
+                TransactionRecordedEvent event = objectMapper.readValue(message, TransactionRecordedEvent.class);
+                log.info("Processing TransactionRecordedEvent: {}", event);
+
+                if ("SUCCESS".equals(event.getStatus())) {
+                    paymentService.completePayment(event.getAggregateId());
+                } else {
+                    log.warn("Transaction recording failed for payment: {}", event.getAggregateId());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to process event", e);
+        }
     }
 }
