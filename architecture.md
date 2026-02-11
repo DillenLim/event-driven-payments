@@ -30,6 +30,7 @@ sequenceDiagram
     W->>W: Reserve Funds
     W->>K: Publish FundsReservedEvent
     K->>P: Consume FundsReservedEvent
+    P->>P: Update State (AUTHORIZATION_IN_PROGRESS)
     P->>P: Update State (AUTHORIZED)
     P->>K: Publish PaymentAuthorizedEvent
     K->>L: Consume PaymentAuthorizedEvent

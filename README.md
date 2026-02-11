@@ -56,6 +56,14 @@ graph TD
     -   **Wallet Service**: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
     -   **Ledger Service**: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
 
+## Testing
+
+To run the end-to-end regression tests (requires Docker):
+
+```bash
+docker run --rm -v "$(pwd)":/usr/src/app -w /usr/src/app/payment-service maven:3.8-openjdk-17 mvn test -Dtest=PaymentIntegrationTest
+```
+
 ## API Usage
 
 ### Create a Payment
