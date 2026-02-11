@@ -21,6 +21,7 @@ public class WalletEventConsumer {
     private final WalletService walletService;
     private final ProcessedEventRepository processedEventRepository;
     private final ObjectMapper objectMapper;
+    private final WalletEventProducer walletEventProducer;
 
     @KafkaListener(topics = "payments.lifecycle", groupId = "wallet-service-group")
     @Transactional
@@ -29,15 +30,26 @@ public class WalletEventConsumer {
             // Simple check to identify event type (in real world uses headers or wrapper)
             if (message.contains("PaymentCreatedEvent")) {
                 PaymentCreatedEvent event = objectMapper.readValue(message, PaymentCreatedEvent.class);
-                
+
                 if (processedEventRepository.existsById(event.getEventId())) {
                     log.info("Event {} already processed. Skipping.", event.getEventId());
                     return;
                 }
 
                 log.info("Processing PaymentCreatedEvent: {}", event);
-                // Reserve funds logic placeholder
-                // walletService.reserveFunds(event.getDebitorId(), event.getAmount());
+
+                boolean success = walletService.reserveFunds(event.getDebitorId(), event.getAmount());
+
+                if (success) {
+                    FundsReservedEvent fundsReservedEvent = new FundsReservedEvent(
+                            event.getAggregateId(), // paymentId
+                            event.getAmount(),
+                            event.getCurrency());
+                    walletEventProducer.emitEvent("payments.lifecycle", event.getAggregateId(), fundsReservedEvent);
+                } else {
+                    log.warn("Failed to reserve funds for payment: {}", event.getAggregateId());
+                    // In a real system, we might emit PaymentFailedEvent here
+                }
 
                 processedEventRepository.save(new ProcessedEvent(event.getEventId(), Instant.now()));
             }

@@ -23,4 +23,20 @@ public class WalletService {
     public Optional<Wallet> getWallet(String walletId) {
         return walletRepository.findById(walletId);
     }
+
+    @Transactional
+    public boolean reserveFunds(String walletId, BigDecimal amount) {
+        // Simple mock implementation
+        // In real world: check balance, deduct held amount
+        return walletRepository.findById(walletId)
+                .map(wallet -> {
+                    if (wallet.getBalance().compareTo(amount) >= 0) {
+                        wallet.setBalance(wallet.getBalance().subtract(amount));
+                        walletRepository.save(wallet);
+                        return true;
+                    }
+                    return false;
+                })
+                .orElse(false);
+    }
 }
