@@ -51,6 +51,15 @@ public class PaymentService {
     public void authorizePayment(String paymentId) {
         Payment payment = getPayment(UUID.fromString(paymentId));
 
+        // Handle transition from CREATED -> FUNDS_RESERVED upon receiving
+        // FundsReservedEvent
+        if (payment.getState() == com.example.payments.payment.domain.PaymentState.CREATED) {
+            log.info("Funds reserved for payment: {}. Transitioning to FUNDS_RESERVED.", paymentId);
+            payment.setState(com.example.payments.payment.domain.PaymentState.FUNDS_RESERVED);
+            payment.setUpdatedAt(java.time.Instant.now());
+            payment = paymentRepository.save(payment);
+        }
+
         // Transition state
         // Enforcing correct path: FUNDS_RESERVED -> AUTHORIZATION_IN_PROGRESS ->
         // AUTHORIZED
