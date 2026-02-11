@@ -21,22 +21,32 @@ public class LedgerEventConsumer {
     private final LedgerService ledgerService;
     private final ProcessedEventRepository processedEventRepository;
     private final ObjectMapper objectMapper;
+    private final LedgerEventProducer ledgerEventProducer;
 
     @KafkaListener(topics = "payments.lifecycle", groupId = "ledger-service-group")
     @Transactional
     public void onEvent(String message) {
         try {
-            if (message.contains("PaymentCreatedEvent")) {
-                PaymentCreatedEvent event = objectMapper.readValue(message, PaymentCreatedEvent.class);
-                
+            if (message.contains("PaymentAuthorizedEvent")) {
+                PaymentAuthorizedEvent event = objectMapper.readValue(message, PaymentAuthorizedEvent.class);
+
                 if (processedEventRepository.existsById(event.getEventId())) {
                     log.info("Event {} already processed. Skipping.", event.getEventId());
                     return;
                 }
 
-                log.info("Recording Ledger for PaymentCreatedEvent: {}", event);
+                log.info("Recording Ledger for PaymentAuthorizedEvent: {}", event);
+
                 // Record logic placeholder
                 // ledgerService.recordEntry(...)
+                // For now, simulate success:
+                String transactionId = java.util.UUID.randomUUID().toString();
+
+                TransactionRecordedEvent recordedEvent = new TransactionRecordedEvent(
+                        event.getAggregateId(),
+                        transactionId);
+
+                ledgerEventProducer.emitEvent("payments.lifecycle", event.getAggregateId(), recordedEvent);
 
                 processedEventRepository.save(new ProcessedEvent(event.getEventId(), Instant.now()));
             }

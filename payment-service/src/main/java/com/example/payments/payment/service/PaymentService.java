@@ -28,8 +28,7 @@ public class PaymentService {
                 request.getAmount(),
                 request.getCurrency(),
                 request.getDebitorId(),
-                request.getBeneficiaryId()
-        );
+                request.getBeneficiaryId());
         Payment savedPayment = paymentRepository.save(payment);
 
         com.example.payments.payment.event.PaymentCreatedEvent event = new com.example.payments.payment.event.PaymentCreatedEvent(
@@ -37,8 +36,7 @@ public class PaymentService {
                 savedPayment.getAmount(),
                 savedPayment.getCurrency(),
                 savedPayment.getDebitorId(),
-                savedPayment.getBeneficiaryId()
-        );
+                savedPayment.getBeneficiaryId());
         paymentEventProducer.emitEvent("payments.lifecycle", savedPayment.getId().toString(), event);
 
         return savedPayment;
@@ -47,5 +45,50 @@ public class PaymentService {
     public Payment getPayment(UUID paymentId) {
         return paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentId));
+    }
+
+    @Transactional
+    public void authorizePayment(String paymentId) {
+        Payment payment = getPayment(UUID.fromString(paymentId));
+
+        // Transition state
+        // Enforcing correct path: FUNDS_RESERVED -> AUTHORIZATION_IN_PROGRESS ->
+        // AUTHORIZED
+        if (payment.getState() == com.example.payments.payment.domain.PaymentState.FUNDS_RESERVED) {
+
+            // Step 1: AUTHORIZATION_IN_PROGRESS
+            payment.setState(com.example.payments.payment.domain.PaymentState.AUTHORIZATION_IN_PROGRESS);
+            payment.setUpdatedAt(java.time.Instant.now());
+            paymentRepository.save(payment); // Save intermediate state
+
+            // Step 2: AUTHORIZED
+            payment.setState(com.example.payments.payment.domain.PaymentState.AUTHORIZED);
+            payment.setUpdatedAt(java.time.Instant.now());
+            paymentRepository.save(payment);
+
+            log.info("Payment authorized: {}", paymentId);
+
+            com.example.payments.payment.event.PaymentAuthorizedEvent event = new com.example.payments.payment.event.PaymentAuthorizedEvent(
+                    payment.getId().toString(),
+                    payment.getAmount(),
+                    payment.getCurrency(),
+                    payment.getDebitorId(),
+                    payment.getBeneficiaryId());
+            paymentEventProducer.emitEvent("payments.lifecycle", payment.getId().toString(), event);
+        }
+    }
+
+    @Transactional
+    public void completePayment(String paymentId) {
+        Payment payment = getPayment(UUID.fromString(paymentId));
+
+        if (payment.getState() == com.example.payments.payment.domain.PaymentState.AUTHORIZED) {
+            payment.setState(com.example.payments.payment.domain.PaymentState.COMPLETED);
+            payment.setUpdatedAt(java.time.Instant.now());
+            paymentRepository.save(payment);
+
+            log.info("Payment completed: {}", paymentId);
+            // Could emit PaymentCompletedEvent here
+        }
     }
 }
