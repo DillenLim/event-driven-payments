@@ -48,8 +48,25 @@ public class WalletEventConsumer {
                     walletEventProducer.emitEvent("payments.lifecycle", event.getAggregateId(), fundsReservedEvent);
                 } else {
                     log.warn("Failed to reserve funds for payment: {}", event.getAggregateId());
-                    // In a real system, we might emit PaymentFailedEvent here
+                    // Emit FundsReservationFailedEvent
+                    FundsReservationFailedEvent failedEvent = new FundsReservationFailedEvent(
+                            event.getAggregateId(), "Insufficient funds");
+                    walletEventProducer.emitEvent("payments.lifecycle", event.getAggregateId(), failedEvent);
                 }
+
+                processedEventRepository.save(new ProcessedEvent(event.getEventId(), Instant.now()));
+            } else if (message.contains("PaymentCancelledEvent")) {
+                // Handle payment cancellation - release reserved funds
+                com.example.payments.wallet.event.PaymentCancelledEvent event = objectMapper.readValue(message,
+                        com.example.payments.wallet.event.PaymentCancelledEvent.class);
+
+                if (processedEventRepository.existsById(event.getEventId())) {
+                    log.info("Event {} already processed. Skipping.", event.getEventId());
+                    return;
+                }
+
+                log.info("Processing PaymentCancelledEvent: {} - Releasing funds", event.getAggregateId());
+                walletService.releaseFunds(event.getWalletId(), event.getAmount());
 
                 processedEventRepository.save(new ProcessedEvent(event.getEventId(), Instant.now()));
             }

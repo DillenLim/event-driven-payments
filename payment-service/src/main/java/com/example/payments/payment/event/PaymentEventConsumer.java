@@ -28,8 +28,14 @@ public class PaymentEventConsumer {
                     paymentService.authorizePayment(event.getAggregateId());
                 } else {
                     log.warn("Funds reservation failed for payment: {}", event.getAggregateId());
-                    // Handle failure (e.g. cancel payment)
+                    paymentService.failPayment(event.getAggregateId(), "Funds reservation failed");
                 }
+            } else if (message.contains("FundsReservationFailedEvent")) {
+                // Direct failure event from wallet
+                com.example.payments.payment.event.FundsReservationFailedEvent event = objectMapper.readValue(message,
+                        com.example.payments.payment.event.FundsReservationFailedEvent.class);
+                log.warn("Processing FundsReservationFailedEvent: {}", event);
+                paymentService.failPayment(event.getAggregateId(), event.getReason());
             } else if (message.contains("TransactionRecordedEvent")) {
                 TransactionRecordedEvent event = objectMapper.readValue(message, TransactionRecordedEvent.class);
                 log.info("Processing TransactionRecordedEvent: {}", event);
@@ -38,6 +44,7 @@ public class PaymentEventConsumer {
                     paymentService.completePayment(event.getAggregateId());
                 } else {
                     log.warn("Transaction recording failed for payment: {}", event.getAggregateId());
+                    paymentService.failPayment(event.getAggregateId(), "Ledger recording failed");
                 }
             }
         } catch (Exception e) {
