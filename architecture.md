@@ -56,3 +56,19 @@ Payment States:
 
 Transitions are enforced by `PaymentStateTransitionService`.
 
+## Failure Handling & Compensating Transactions
+
+The system implements **compensating transactions** to handle failures at each step of the Saga:
+
+### Failure Scenarios
+
+| Scenario | Trigger | Compensating Action |
+| :--- | :--- | :--- |
+| **Insufficient Funds** | Wallet cannot reserve funds | Emit `FundsReservationFailedEvent` → Payment transitions to `FAILED` |
+| **Ledger Failure** | Ledger fails to record transaction | Emit `PaymentCancelledEvent` → Wallet releases reserved funds |
+| **User Cancellation** | Payment cancelled after reservation | Emit `PaymentCancelledEvent` → Wallet releases funds |
+
+### Key State Transitions for Failure
+- `CREATED` → `FAILED` (if funds reservation fails)
+- `AUTHORIZATION_IN_PROGRESS` → `FAILED` (if authorization logic fails)
+- `FUNDS_RESERVED` → `CANCELLED` (user-initiated cancellation)

@@ -42,3 +42,36 @@ All events extend `BaseEvent` and contain:
 - **Producer**: Payment Service
 - **Consumer**: Notification Service
 - **Action**: Sends confirmation email/SMS.
+
+---
+
+## Failure Handling Events
+
+The system implements **compensating transactions** to handle failures gracefully.
+
+### FundsReservationFailedEvent
+- **Trigger**: Insufficient funds or wallet service unable to reserve funds.
+- **Producer**: Wallet Service
+- **Consumer**: Payment Service
+- **Action**: Transitions payment state to `FAILED`.
+
+### PaymentFailedEvent
+- **Trigger**: Any step in the saga fails (funds reservation, ledger recording).
+- **Producer**: Payment Service
+- **Consumer**: None (informational event for audit logs/notifications)
+- **Action**: Records failure reason.
+
+### PaymentCancelledEvent
+- **Trigger**: Payment cancelled after funds were reserved.
+- **Producer**: Payment Service
+- **Consumer**: Wallet Service
+- **Action**: Releases (unreserves) funds back to the wallet as a **compensating transaction**.
+
+---
+
+## Compensating Transaction Flow
+
+When a payment fails after funds are reserved:
+1.  Payment Service transitions to `FAILED` or `CANCELLED`.
+2.  Payment Service emits `PaymentCancelledEvent` with `walletId`, `amount`, and `currency`.
+3.  Wallet Service consumes the event and calls `releaseFunds()` to add the amount back to the wallet balance.
