@@ -25,6 +25,12 @@ graph TD
     P -->|PaymentCompleted| N[Notification Service]
 ```
 
+## Documentation
+
+-   [Architecture Overview](architecture.md)
+-   [Payment State Machine](state-machine.md)
+-   [Event Catalog](events.md)
+
 ## Services
 
 -   **Payment Service**: Manages payment lifecycle and state machine (Saga Orchestrator logic via choreography).
