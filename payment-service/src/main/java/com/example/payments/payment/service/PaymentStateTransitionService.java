@@ -14,11 +14,11 @@ import java.util.Set;
 public class PaymentStateTransitionService {
 
     private static final Map<PaymentState, Set<PaymentState>> VALID_TRANSITIONS = Map.of(
-            PaymentState.CREATED, EnumSet.of(PaymentState.FUNDS_RESERVED),
+            PaymentState.CREATED, EnumSet.of(PaymentState.FUNDS_RESERVED, PaymentState.FAILED),
             PaymentState.FUNDS_RESERVED,
             EnumSet.of(PaymentState.AUTHORIZATION_IN_PROGRESS, PaymentState.CANCELLED, PaymentState.FAILED,
                     PaymentState.EXPIRED),
-            PaymentState.AUTHORIZATION_IN_PROGRESS, EnumSet.of(PaymentState.AUTHORIZED),
+            PaymentState.AUTHORIZATION_IN_PROGRESS, EnumSet.of(PaymentState.AUTHORIZED, PaymentState.FAILED),
             PaymentState.AUTHORIZED, EnumSet.of(PaymentState.COMPLETED));
 
     public boolean isValidTransition(PaymentState currentState, PaymentState nextState) {

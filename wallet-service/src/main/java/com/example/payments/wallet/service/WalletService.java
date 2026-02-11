@@ -39,4 +39,17 @@ public class WalletService {
                 })
                 .orElse(false);
     }
+
+    /**
+     * Releases (unreserves) funds back to wallet as a compensating transaction.
+     * Called when payment fails or is cancelled after funds were reserved.
+     */
+    @Transactional
+    public void releaseFunds(String walletId, BigDecimal amount) {
+        walletRepository.findById(walletId)
+                .ifPresent(wallet -> {
+                    wallet.setBalance(wallet.getBalance().add(amount));
+                    walletRepository.save(wallet);
+                });
+    }
 }

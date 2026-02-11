@@ -100,4 +100,46 @@ public class PaymentService {
             // Could emit PaymentCompletedEvent here
         }
     }
+
+    /**
+     * Marks a payment as failed.
+     */
+    @Transactional
+    public void failPayment(String paymentId, String reason) {
+        Payment payment = getPayment(UUID.fromString(paymentId));
+
+        if (payment.getState() != com.example.payments.payment.domain.PaymentState.COMPLETED &&
+                payment.getState() != com.example.payments.payment.domain.PaymentState.FAILED) {
+
+            payment.setState(com.example.payments.payment.domain.PaymentState.FAILED);
+            payment.setUpdatedAt(java.time.Instant.now());
+            paymentRepository.save(payment);
+
+            log.warn("Payment failed: {} - Reason: {}", paymentId, reason);
+
+            // Emit PaymentFailedEvent
+            com.example.payments.payment.event.PaymentFailedEvent event = new com.example.payments.payment.event.PaymentFailedEvent(
+                    paymentId, reason);
+            paymentEventProducer.emitEvent("payments.lifecycle", paymentId, event);
+        }
+    }
+
+    /**
+     * Cancels a payment and triggers fund release.
+     */
+    @Transactional
+    public void cancelPayment(String paymentId, String debitorId, java.math.BigDecimal amount, String currency) {
+        Payment payment = getPayment(UUID.fromString(paymentId));
+
+        payment.setState(com.example.payments.payment.domain.PaymentState.CANCELLED);
+        payment.setUpdatedAt(java.time.Instant.now());
+        paymentRepository.save(payment);
+
+        log.info("Payment cancelled: {}", paymentId);
+
+        // Emit PaymentCancelledEvent to trigger fund release
+        com.example.payments.payment.event.PaymentCancelledEvent event = new com.example.payments.payment.event.PaymentCancelledEvent(
+                paymentId, debitorId, amount, currency);
+        paymentEventProducer.emitEvent("payments.lifecycle", paymentId, event);
+    }
 }
