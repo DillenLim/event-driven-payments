@@ -1,6 +1,7 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
+COPY common common
 COPY payment-service payment-service
 COPY wallet-service wallet-service
 COPY ledger-service ledger-service
