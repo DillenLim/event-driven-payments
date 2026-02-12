@@ -11,6 +11,8 @@ All events extend `BaseEvent` and contain:
 - `timestamp`: UTC timestamp
 - `payload`: Specific event data
 
+**Note:** Event classes are intentionally duplicated across services. Each bounded context maintains its own event definitions to preserve service autonomy.
+
 ## Supported Events
 
 ### PaymentCreatedEvent

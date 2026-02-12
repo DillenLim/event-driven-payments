@@ -7,6 +7,17 @@ The project is split into bounded contexts:
 - Ledger
 - Notification
 
+### Code Sharing Strategy
+**Shared infrastructure** (common module):
+- `ProcessedEvent`: Idempotency tracking
+- Build-time dependency only
+
+**Separate domain logic** (per service):
+- Entities, repositories, services
+- Event schemas (duplicated for autonomy)
+
+This hybrid approach preserves bounded context independence while reducing infrastructure duplication.
+
 ## Event Driven
 We use Kafka for async communication.
 - `payments.lifecycle`: Key topic for payment state changes.
