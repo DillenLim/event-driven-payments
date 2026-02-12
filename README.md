@@ -12,37 +12,20 @@ A distributed, event-driven Java Spring Boot microservices payment platform impl
 The system uses a choreography-based Saga pattern where services react to events.
 
 ```mermaid
-flowchart TD
-    User((User)) -->|POST /payments| P[Payment Service]
-    P -->|PaymentCreatedEvent| K{Kafka}
-    K -->|PaymentCreatedEvent| W[Wallet Service]
+graph LR
+    User([User]) -->|POST /payments| PS[Payment Service]
+    PS -->|1. PaymentCreated| K([Kafka])
+    K -->|2. PaymentCreated| WS[Wallet Service]
+    WS -->|3. FundsReserved| K
+    K -->|4. FundsReserved| PS
+    PS -->|5. PaymentAuthorized| K
+    K -->|6. PaymentAuthorized| LS[Ledger Service]
+    LS -->|7. TransactionRecorded| K
+    K -->|8. TransactionRecorded| PS
+    PS -->|9. PaymentCompleted| NS[Notification Service]
     
-    %% Success Path
-    W -->|FundsReservedEvent SUCCESS| K
-    K -->|FundsReservedEvent| P
-    P -->|PaymentAuthorizedEvent| K
-    K -->|PaymentAuthorizedEvent| L[Ledger Service]
-    L -->|TransactionRecordedEvent| K
-    K -->|TransactionRecordedEvent| P
-    P -->|PaymentCompletedEvent| N[Notification Service]
-    
-    %% Failure Path
-    W -.->|FundsReservationFailedEvent| K
-    K -.->|FundsReservationFailedEvent| P
-    P -.->|PaymentFailedEvent| N
-    
-    %% Compensating Transaction
-    P -.->|PaymentCancelledEvent| K
-    K -.->|PaymentCancelledEvent| W
-    
-    classDef successPath fill:#4caf50,stroke:#2e7d32,color:#fff
-    classDef failurePath fill:#f44336,stroke:#c62828,color:#fff
-    
-    style P fill:#2196f3,stroke:#1565c0,color:#fff
-    style W fill:#2196f3,stroke:#1565c0,color:#fff
-    style L fill:#2196f3,stroke:#1565c0,color:#fff
-    style N fill:#ff9800,stroke:#e65100,color:#fff
-    style K fill:#9c27b0,stroke:#6a1b9a,color:#fff
+    WS -.->|Failure: FundsReservationFailed| K
+    K -.->|Compensate: PaymentCancelled| WS
 ```
 
 ## Documentation
