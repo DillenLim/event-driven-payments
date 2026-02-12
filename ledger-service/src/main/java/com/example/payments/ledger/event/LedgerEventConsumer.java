@@ -1,7 +1,7 @@
 package com.example.payments.ledger.event;
 
-import com.example.payments.ledger.domain.ProcessedEvent;
-import com.example.payments.ledger.repository.ProcessedEventRepository;
+import com.example.payments.common.domain.ProcessedEvent;
+import com.example.payments.common.repository.ProcessedEventRepository;
 import com.example.payments.ledger.service.LedgerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

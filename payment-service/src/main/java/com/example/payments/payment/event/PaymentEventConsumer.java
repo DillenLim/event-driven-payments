@@ -1,7 +1,7 @@
 package com.example.payments.payment.event;
 
-import com.example.payments.payment.domain.ProcessedEvent;
-import com.example.payments.payment.repository.ProcessedEventRepository;
+import com.example.payments.common.domain.ProcessedEvent;
+import com.example.payments.common.repository.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

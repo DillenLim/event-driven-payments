@@ -1,7 +1,7 @@
 package com.example.payments.wallet.event;
 
-import com.example.payments.wallet.domain.ProcessedEvent;
-import com.example.payments.wallet.repository.ProcessedEventRepository;
+import com.example.payments.common.domain.ProcessedEvent;
+import com.example.payments.common.repository.ProcessedEventRepository;
 import com.example.payments.wallet.service.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
