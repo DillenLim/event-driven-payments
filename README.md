@@ -73,6 +73,39 @@ To run the end-to-end regression tests (requires Docker):
 docker run --rm -v "$(pwd)":/usr/src/app -w /usr/src/app/payment-service maven:3.8-openjdk-17 mvn test -Dtest=PaymentIntegrationTest
 ```
 
+## Failure Handling
+
+The system implements compensating transactions for fault tolerance.
+
+### Insufficient Funds Scenario
+
+**Flow:**
+1. User creates payment for $100
+2. Payment Service emits `PaymentCreatedEvent` (state: `CREATED`)
+3. Wallet Service checks balance → **Insufficient funds**
+4. Wallet Service emits `FundsReservationFailedEvent`
+5. Payment Service transitions to `FAILED` state
+6. User receives error response
+
+**Code:** [WalletService.reserveFunds()](file:///Users/dillenlimziqian/IdeaProjects/event-driven-payments/wallet-service/src/main/java/com/example/payments/wallet/service/WalletService.java#L27-L46)
+
+### Payment Cancellation Scenario
+
+**Flow:**
+1. Payment created and funds reserved
+2. User cancels payment (or timeout occurs)
+3. Payment Service emits `PaymentCancelledEvent`
+4. Wallet Service **releases reserved funds** (compensating transaction)
+5. Wallet balance restored
+
+**Code:** [WalletService.releaseFunds()](file:///Users/dillenlimziqian/IdeaProjects/event-driven-payments/wallet-service/src/main/java/com/example/payments/wallet/service/WalletService.java#L48-L65)
+
+### Idempotency
+
+All events use `ProcessedEvent` table to prevent duplicate processing.
+
+**Code:** [ProcessedEvent](file:///Users/dillenlimziqian/IdeaProjects/event-driven-payments/common/src/main/java/com/example/payments/common/domain/ProcessedEvent.java)
+
 ## API Usage
 
 ### Create a Payment
