@@ -55,3 +55,56 @@ Payment States:
 
 Transitions are enforced by `PaymentStateTransitionService`.
 
+## Compensation and Failure Flows
+
+### Insufficient Funds Flow
+When the Wallet Service cannot reserve funds due to insufficient balance:
+
+```
+PaymentCreatedEvent -> WalletService attempts to reserve funds 
+  -> InsufficientFundsEvent emitted 
+  -> PaymentService transitions payment to FAILED 
+  -> PaymentFailedEvent emitted 
+  -> NotificationService sends failure notification
+```
+
+### Mid-Saga Failure and Compensation
+When any service fails mid-saga, compensation events trigger rollback of prior steps:
+
+1. **If Ledger fails after Wallet reserved funds**:
+   ```
+   FundsReservedEvent -> LedgerService attempts to record 
+     -> LedgerFailedEvent emitted 
+     -> WalletService releases reserved funds (compensation) 
+     -> PaymentService transitions to FAILED
+   ```
+
+2. **Compensation Actions**:
+   - `releaseFunds`: WalletService releases previously reserved funds
+   - `reverseTransaction`: LedgerService reverses recorded entries (if applicable)
+   - `cancelPayment`: PaymentService transitions to CANCELLED/FAILED state
+
+## Full Saga Event Flow
+
+### Success Path
+```
+PaymentCreatedEvent 
+  -> WalletService reserves funds 
+  -> FundsReservedEvent 
+  -> LedgerService records entry 
+  -> TransactionRecordedEvent 
+  -> PaymentService completes payment 
+  -> PaymentCompletedEvent 
+  -> NotificationService sends success notification
+```
+
+### Failure Path
+```
+PaymentCreatedEvent 
+  -> WalletService has insufficient funds 
+  -> InsufficientFundsEvent 
+  -> PaymentService transitions to FAILED 
+  -> PaymentFailedEvent 
+  -> NotificationService sends failure notification
+```
+

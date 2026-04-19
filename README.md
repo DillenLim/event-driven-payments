@@ -52,9 +52,10 @@ graph TD
     ```
 
 3.  **Access APIs**
-    -   **Payment Service**: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
-    -   **Wallet Service**: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
-    -   **Ledger Service**: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
+    -   **Payment Service**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+    -   **Wallet Service**: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
+    -   **Ledger Service**: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
+    -   **Notification Service**: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
 
 ## Demo
 
@@ -74,7 +75,7 @@ This script will:
 ### Create a Payment
 
 ```bash
-curl -X POST http://localhost:8081/payments \
+curl -X POST http://localhost:8080/payments \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 100.00,
@@ -87,5 +88,5 @@ curl -X POST http://localhost:8081/payments \
 ### Check Payment Status
 
 ```bash
-curl http://localhost:8081/payments/{paymentId}
+curl http://localhost:8080/payments/{paymentId}
 ```
