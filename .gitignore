@@ -5,3 +5,11 @@ target/
 .idea
 *.iml
 .DS_Store
+
+# Logs
+*.log
+payment_*.txt
+payment_*.log
+
+# Temp files
+.tmp_*
