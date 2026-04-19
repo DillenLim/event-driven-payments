@@ -2,6 +2,7 @@ package com.example.payments.payment.web;
 
 import com.example.payments.payment.domain.Payment;
 import com.example.payments.payment.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<Payment> createPayment(@RequestBody CreatePaymentRequest request) {
+    public ResponseEntity<Payment> createPayment(@Valid @RequestBody CreatePaymentRequest request) {
         Payment payment = paymentService.createPayment(request);
         return ResponseEntity.status(201).body(payment);
     }
